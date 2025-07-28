@@ -1,45 +1,107 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import {
+  CalendarDays,
+  Pill,
+  AlertCircle,
+  PlusCircle,
+  Home,
+} from 'lucide-react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
+    <View style={styles.tabWrapper}>
+      <Tabs
+        screenOptions={{
+          tabBarShowLabel: true,
+          tabBarActiveTintColor: '#007AFF',
+          tabBarInactiveTintColor: '#999',
+          tabBarStyle: {
             position: 'absolute',
+            height: 75,
+            borderRadius: 20,
+            marginHorizontal: 20,
+            marginBottom: Platform.OS === 'ios' ? 30 : 20,
+            backgroundColor: '#ffffff',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 10,
           },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          headerShown: false,
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
+          },
         }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Hem',
+            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="schedule"
+          options={{
+            title: 'Schema',
+            tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="add"
+          options={{
+            title: '',
+            tabBarIcon: () => (
+              <View style={styles.addButton}>
+                <PlusCircle color="#fff" size={36} />
+              </View>
+            ),
+            tabBarLabelStyle: { display: 'none' },
+          }}
+        />
+
+        <Tabs.Screen
+          name="medicin"
+          options={{
+            title: 'medicin',
+            tabBarIcon: ({ color, size }) => <Pill color={color} size={size} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="important"
+          options={{
+            title: 'Viktigt',
+            tabBarIcon: ({ color, size }) => <AlertCircle color={color} size={size} />,
+          }}
+        />
+      </Tabs>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  tabWrapper: {
+    flex: 1,
+    backgroundColor: '#F0F4F8', // Bakgrundsfärg hela appen
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+});
