@@ -29,7 +29,7 @@ export default function Login() {
     try {
       setLoading(true);
       await login(email, password);
-      router.replace('/(tabs)/schedule');
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Fel vid inloggning', error.message);
     } finally {

@@ -23,7 +23,7 @@ export default function Home() {
             styles.primaryButton,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => router.replace('/(tabs)/schedule')}
+          onPress={() => router.replace('/(tabs)')}
           accessibilityLabel="Fortsätt som gäst"
         >
           <Text style={styles.primaryText}>🎯 Fortsätt som gäst</Text>
