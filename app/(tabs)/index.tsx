@@ -1,61 +1,71 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 
-export default function HomeScreen() {
+export default function HomeTabScreen() {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>👋 Välkommen till memoZ</Text>
-      <Text style={styles.subtitle}>Ditt personliga stöd varje dag</Text>
+    <View style={styles.container}>
+      <Image
+        source={require('../../assets/images/paper_17737469.png')}
+        style={styles.logo}
+        resizeMode="contain"
+        accessibilityLabel="Appens logotyp"
+      />
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🗓️ Dagens Schema</Text>
-        <Text style={styles.cardContent}>3 uppgifter planerade</Text>
-      </View>
+      <Text style={styles.heading}>👋 Välkommen till memoZ!</Text>
+      <Text style={styles.subheading}>Här kan du enkelt hålla koll på dina rutiner, mediciner och viktiga tider.</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>💊 Mediciner</Text>
-        <Text style={styles.cardContent}>2 mediciner kvar att ta</Text>
+      <View style={styles.tipBox}>
+        <Text style={styles.tipTitle}>💡 Tips:</Text>
+        <Text style={styles.tipText}>Använd "+"-knappen i mitten för att lägga till nya uppgifter i ditt schema!</Text>
       </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🚨 Viktigt idag</Text>
-        <Text style={styles.cardContent}>Läkarbesök kl 14:00</Text>
-      </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F0F4F8',
     padding: 24,
-    backgroundColor: '#F9FBFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  title: {
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
+  heading: {
     fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#1DA1F2',
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  subtitle: {
+  subheading: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
+    color: '#444',
+    textAlign: 'center',
+    marginBottom: 30,
+    paddingHorizontal: 10,
   },
-  card: {
+  tipBox: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1DA1F2',
+    padding: 16,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
+  tipTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 6,
   },
-  cardContent: {
+  tipText: {
     fontSize: 14,
-    color: '#444',
+    color: '#555',
   },
 });
