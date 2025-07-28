@@ -1,40 +1,67 @@
 import { useRouter } from 'expo-router';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, SafeAreaView } from 'react-native';
 
 export default function Home() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Image
-        source={require('../assets/images/paper_17737469.png')} 
+        source={require('../assets/images/paper_17737469.png')}
         style={styles.logo}
         resizeMode="contain"
+        accessible
+        accessibilityLabel="MemoZ logotyp"
       />
 
       <Text style={styles.title}>Välkommen till memoZ</Text>
       <Text style={styles.subtitle}>Din visuella hjälp med rutiner, medicin och mer!</Text>
 
       <View style={styles.buttonContainer}>
-        <Pressable style={styles.primaryButton} onPress={() => router.replace('/(tabs)/schedule')}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => router.replace('/(tabs)/schedule')}
+          accessibilityLabel="Fortsätt som gäst"
+        >
           <Text style={styles.primaryText}>🎯 Fortsätt som gäst</Text>
         </Pressable>
 
-        <Pressable style={styles.secondaryButton} onPress={() => router.push('/login')}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            pressed && styles.buttonPressedSecondary,
+          ]}
+          onPress={() => router.push('/login')}
+          accessibilityLabel="Logga in"
+        >
           <Text style={styles.secondaryText}>🔐 Logga in</Text>
         </Pressable>
 
-        <Pressable style={styles.tertiaryButton} onPress={() => router.push('/register')}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.tertiaryButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => router.push('/register')}
+          accessibilityLabel="Skapa konto"
+        >
           <Text style={styles.tertiaryText}>🆕 Skapa konto</Text>
         </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: '#E3F2FD', alignItems: 'center', justifyContent: 'center', padding: 24,
+    flex: 1,
+    backgroundColor: '#E3F2FD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
   },
   logo: {
     width: 180,
@@ -50,7 +77,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#555',
+    color: '#333',
     marginBottom: 30,
     textAlign: 'center',
   },
@@ -64,11 +91,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  primaryText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   secondaryButton: {
     backgroundColor: '#ffffff',
     borderColor: '#1DA1F2',
@@ -77,20 +99,31 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  secondaryText: {
-    color: '#1DA1F2',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   tertiaryButton: {
     backgroundColor: '#FFA726',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
+  primaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  secondaryText: {
+    color: '#1DA1F2',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   tertiaryText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  buttonPressed: {
+    opacity: 0.85,
+  },
+  buttonPressedSecondary: {
+    backgroundColor: '#e3f3ff',
   },
 });
