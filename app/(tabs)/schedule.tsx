@@ -1,66 +1,53 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase'; 
 
-export default function SchemaScreen() {
+export default function ScheduleScreen() {
   const [selectedDate, setSelectedDate] = useState('');
-  const [tasks, setTasks] = useState<{ title: string; time: string }[]>([]);
 
-  useEffect(() => {
-    if (!selectedDate) return;
-
-    const loadTasks = async () => {
-      const q = query(collection(db, 'schema'), where('date', '==', selectedDate));
-      const snapshot = await getDocs(q);
-      const result: { title: string; time: string }[] = [];
-
-      snapshot.forEach(doc => {
-        result.push(doc.data() as any);
-      });
-
-      setTasks(result);
-    };
-
-    loadTasks();
-  }, [selectedDate]);
-  
+  const tasks: Record<string, string[]> = {
+    '2025-07-28': ['Ta medicin 08:00', 'Träffa läkare 15:00'],
+    '2025-07-29': ['Gå en promenad', 'Middag med familj'],
+  };
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>📅 Mitt schema</Text>
+
       <Calendar
         onDayPress={(day) => setSelectedDate(day.dateString)}
         markedDates={{
           [selectedDate]: {
             selected: true,
-            selectedColor: '#007AFF',
+            selectedColor: '#1DA1F2',
           },
         }}
         theme={{
-          todayTextColor: '#007AFF',
-          arrowColor: '#007AFF',
-          textDayFontWeight: '600',
+          todayTextColor: '#1DA1F2',
+          selectedDayBackgroundColor: '#1DA1F2',
+          arrowColor: '#1DA1F2',
         }}
+        style={styles.calendar}
       />
 
-      {selectedDate ? (
-        <View style={styles.taskContainer}>
-          <Text style={styles.taskTitle}>🗓 {selectedDate}</Text>
-          {tasks.length === 0 ? (
-            <Text style={styles.noTasks}>Inga uppgifter för denna dag</Text>
-          ) : (
-            tasks.map((task, i) => (
-              <View key={i} style={styles.taskBox}>
-                <Text style={styles.taskName}>{task.title}</Text>
-                <Text style={styles.taskTime}>{task.time}</Text>
-              </View>
-            ))
-          )}
-        </View>
-      ) : (
-        <Text style={styles.infoText}>Välj ett datum för att se uppgifter</Text>
-      )}
+      <Text style={styles.taskTitle}>
+        {selectedDate ? `Uppgifter för ${selectedDate}` : 'Välj ett datum'}
+      </Text>
+
+      <FlatList
+        data={tasks[selectedDate] || []}
+        keyExtractor={(item, index) => `${selectedDate}-${index}`}
+        renderItem={({ item }) => (
+          <View style={styles.taskBox}>
+            <Text style={styles.taskText}>🗓️ {item}</Text>
+          </View>
+        )}
+        ListEmptyComponent={
+          selectedDate ? (
+            <Text style={styles.noTasks}>Inga uppgifter planerade för denna dag.</Text>
+          ) : null
+        }
+      />
     </View>
   );
 }
@@ -68,40 +55,40 @@ export default function SchemaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F9FD',
+    padding: 16,
+    backgroundColor: '#F9FAFB',
   },
-  taskContainer: {
-    padding: 20,
-  },
-  taskTitle: {
-    fontSize: 20,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 12,
+    color: '#1DA1F2',
+    textAlign: 'center',
+  },
+  calendar: {
+    borderRadius: 12,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  taskTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   taskBox: {
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 8,
     elevation: 2,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
-  taskName: {
+  taskText: {
     fontSize: 16,
-    fontWeight: '600',
-  },
-  taskTime: {
-    color: '#555',
   },
   noTasks: {
-    fontStyle: 'italic',
-    color: '#777',
-  },
-  infoText: {
     textAlign: 'center',
     marginTop: 16,
-    fontSize: 16,
-    color: '#777',
+    color: '#888',
   },
 });
