@@ -1,5 +1,6 @@
-// lib/firebase.ts
 import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -10,4 +11,10 @@ const firebaseConfig = {
   appId: process.env.FIREBASE_APP_ID,
 };
 
-export const firebaseApp = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+
+// 🔑 Autentisering
+export const auth = getAuth(app);
+
+// 🔥 Firestore-databasen
+export const db = getFirestore(app);

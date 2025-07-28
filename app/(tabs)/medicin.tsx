@@ -1,19 +1,30 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 
 export default function MedicinScreen() {
+  const todaysMedications = [
+    { name: 'Metformin', time: '08:00' },
+    { name: 'Levaxin', time: '20:00' },
+  ];
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>💊 Mediciner för idag</Text>
 
-      <View style={styles.medicineBox}>
-        <Text style={styles.medicineName}>Metformin</Text>
-        <Text style={styles.medicineTime}>08:00</Text>
-      </View>
-
-      <View style={styles.medicineBox}>
-        <Text style={styles.medicineName}>Levaxin</Text>
-        <Text style={styles.medicineTime}>20:00</Text>
-      </View>
+      <FlatList
+        data={todaysMedications}
+        keyExtractor={(item, index) => `${item.name}-${index}`}
+        renderItem={({ item }) => (
+          <View style={styles.medicineBox}>
+            <View style={styles.leftSide}>
+              <Text style={styles.medicineName}>{item.name}</Text>
+              <Text style={styles.medicineTime}>🕒 {item.time}</Text>
+            </View>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.noMed}>Inga mediciner planerade för idag.</Text>
+        }
+      />
     </View>
   );
 }
@@ -28,6 +39,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#2E7D32',
+    textAlign: 'center',
   },
   medicineBox: {
     backgroundColor: '#ffffff',
@@ -35,14 +48,29 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  leftSide: {
+    flex: 1,
   },
   medicineName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
+    color: '#333',
   },
   medicineTime: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 4,
+  },
+  noMed: {
+    fontSize: 16,
+    textAlign: 'center',
     color: '#888',
+    marginTop: 20,
   },
 });
