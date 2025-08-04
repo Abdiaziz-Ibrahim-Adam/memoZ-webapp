@@ -1,26 +1,15 @@
+import { useColorScheme } from 'react-native';
+import { ThemeProvider } from 'styled-components/native';
+import { DarkTheme, LightTheme } from '../constants/themes';
 import { Stack } from 'expo-router';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
 
-export default function Layout() {
+export default function RootLayout() {
+  const scheme = useColorScheme();
+  const theme = scheme === 'dark' ? DarkTheme : LightTheme;
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Stack
-          screenOptions={{
-            headerShown: false, 
-          }}
-        />
-      </View>
-    </SafeAreaView>
+    <ThemeProvider theme={theme}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F0F4F8', // background base color
-  },
-  container: {
-    flex: 1,
-  },
-});

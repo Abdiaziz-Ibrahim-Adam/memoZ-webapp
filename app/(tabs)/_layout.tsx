@@ -1,107 +1,59 @@
 import { Tabs } from 'expo-router';
-import {
-  CalendarDays,
-  Pill,
-  AlertCircle,
-  PlusCircle,
-  Home,
-} from 'lucide-react-native';
-import { View, StyleSheet, Platform } from 'react-native';
+import { Home, CalendarDays, Plus, ListTodo } from 'lucide-react-native';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
-    <View style={styles.tabWrapper}>
-      <Tabs
-        screenOptions={{
-          tabBarShowLabel: true,
-          tabBarActiveTintColor: '#007AFF',
-          tabBarInactiveTintColor: '#999',
-          tabBarStyle: {
-            position: 'absolute',
-            height: 75,
-            borderRadius: 20,
-            marginHorizontal: 20,
-            marginBottom: Platform.OS === 'ios' ? 30 : 20,
-            backgroundColor: '#ffffff',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 10,
-            elevation: 10,
-          },
-          headerShown: false,
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#C5C5C5',
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          height: 65,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+          borderTopWidth: 0,
+          elevation: 0,
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Home color={color} size={24} />
+          ),
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Hem',
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
-          }}
-        />
+      />
 
-        <Tabs.Screen
-          name="schedule"
-          options={{
-            title: 'Schema',
-            tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
-          }}
-        />
+      <Tabs.Screen
+        name="tasks"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <ListTodo color={color} size={24} />
+          ),
+        }}
+      />
 
-        <Tabs.Screen
-          name="add"
-          options={{
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.addButton}>
-                <PlusCircle color="#fff" size={36} />
-              </View>
-            ),
-            tabBarLabelStyle: { display: 'none' },
-          }}
-        />
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <CalendarDays color={color} size={24} />
+          ),
+        }}
+      />
 
-        <Tabs.Screen
-          name="medicin"
-          options={{
-            title: 'medicin',
-            tabBarIcon: ({ color, size }) => <Pill color={color} size={size} />,
-          }}
-        />
-
-        <Tabs.Screen
-          name="important"
-          options={{
-            title: 'Viktigt',
-            tabBarIcon: ({ color, size }) => <AlertCircle color={color} size={size} />,
-          }}
-        />
-      </Tabs>
-    </View>
+      <Tabs.Screen
+        name="add"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Plus color={color} size={28} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabWrapper: {
-    flex: 1,
-    backgroundColor: '#F0F4F8', // Bakgrundsfärg hela appen
-  },
-  addButton: {
-    backgroundColor: '#007AFF',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-});

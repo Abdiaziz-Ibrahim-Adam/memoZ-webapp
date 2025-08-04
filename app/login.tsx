@@ -1,126 +1,153 @@
+// app/login.tsx
 import { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   Pressable,
-  Alert,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
+  TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
-import { login } from '../lib/auth';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
+import { signIn } from '../lib/auth';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 
-export default function Login() {
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Fel', 'Fyll i både e-post och lösenord');
-      return;
-    }
-
     try {
-      setLoading(true);
-      await login(email, password);
+      await signIn(email, password);
       router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Fel vid inloggning', error.message);
-    } finally {
-      setLoading(false);
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
-        <Text style={styles.title}>🔐 Logga in</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Sign In</Text>
+      <Text style={styles.subtitle}>Welcome back to TaskNexus</Text>
 
+      {/* Email */}
+      <View style={styles.inputGroup}>
+        <Mail size={20} color="#888" />
         <TextInput
           style={styles.input}
-          placeholder="E-post"
-          keyboardType="email-address"
-          autoCapitalize="none"
+          placeholder="Email"
+          placeholderTextColor="#999"
           value={email}
           onChangeText={setEmail}
-          accessibilityLabel="E-postadress"
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
+      </View>
 
+      {/* Password */}
+      <View style={styles.inputGroup}>
+        <Lock size={20} color="#888" />
         <TextInput
           style={styles.input}
-          placeholder="Lösenord"
-          secureTextEntry
+          placeholder="Password"
+          placeholderTextColor="#999"
           value={password}
           onChangeText={setPassword}
-          accessibilityLabel="Lösenord"
+          secureTextEntry={!showPass}
         />
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-            loading && { opacity: 0.7 },
-          ]}
-          onPress={handleLogin}
-          disabled={loading}
-          accessibilityLabel="Logga in-knapp"
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
+        <TouchableOpacity onPress={() => setShowPass(!showPass)}>
+          {showPass ? (
+            <EyeOff size={20} color="#888" />
           ) : (
-            <Text style={styles.buttonText}>Logga in</Text>
+            <Eye size={20} color="#888" />
           )}
-        </Pressable>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </TouchableOpacity>
+      </View>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <Pressable onPress={handleLogin} style={styles.signInButton}>
+        <Text style={styles.signInText}>Sign In</Text>
+      </Pressable>
+
+      <TouchableOpacity onPress={() => router.push('/register')}>
+        <Text style={styles.linkText}>
+          Don’t have an account? <Text style={styles.linkAccent}>Register</Text>
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.replace('/')}>
+        <Text style={styles.backLink}>← Tillbaka till startsidan</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f0f8ff',
-  },
   container: {
     flex: 1,
-    padding: 24,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 24,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 24,
     textAlign: 'center',
+    color: '#000',
+    marginBottom: 4,
+  },
+  subtitle: {
+    textAlign: 'center',
+    color: '#888',
+    marginBottom: 24,
+  },
+  inputGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    marginBottom: 24,
+    paddingBottom: 4,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 12,
-    marginBottom: 16,
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    flex: 1,
+    marginLeft: 12,
+    color: '#000',
+    fontSize: 16,
   },
-  button: {
-    backgroundColor: '#1DA1F2',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
+  errorText: {
+    color: 'red',
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  buttonPressed: {
-    opacity: 0.85,
+  signInButton: {
+    backgroundColor: '#7c3aed', // Violet
+    paddingVertical: 12,
+    borderRadius: 30,
+    marginBottom: 20,
   },
-  buttonText: {
+  signInText: {
     color: '#fff',
     fontWeight: 'bold',
+    textAlign: 'center',
     fontSize: 16,
+  },
+  linkText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 14,
+  },
+  linkAccent: {
+    color: '#7c3aed',
+    fontWeight: '600',
+  },
+  backLink: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 13,
+    marginTop: 24,
   },
 });

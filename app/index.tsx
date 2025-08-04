@@ -1,129 +1,98 @@
+// app/index.tsx
+import { View, Text, Pressable, Image, StyleSheet, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, StyleSheet, Text, View, SafeAreaView } from 'react-native';
 
-export default function Home() {
+export default function HomeScreen() {
   const router = useRouter();
+  const isDark = useColorScheme() === 'dark';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}>
       <Image
         source={require('../assets/images/paper_17737469.png')}
         style={styles.logo}
         resizeMode="contain"
-        accessible
-        accessibilityLabel="MemoZ logotyp"
       />
 
-      <Text style={styles.title}>Välkommen till memoZ</Text>
-      <Text style={styles.subtitle}>Din visuella hjälp med rutiner, medicin och mer!</Text>
+      <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>
+        Välkommen till memoZ
+      </Text>
+      <Text style={[styles.subtitle, { color: isDark ? '#aaa' : '#555' }]}>
+        Din visuella hjälp med rutiner, medicin och mer!
+      </Text>
 
       <View style={styles.buttonContainer}>
         <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={[styles.button, styles.guest]}
           onPress={() => router.replace('/(tabs)')}
-          accessibilityLabel="Fortsätt som gäst"
         >
-          <Text style={styles.primaryText}>🎯 Fortsätt som gäst</Text>
+          <Text style={styles.buttonText}>🎯 Fortsätt som gäst</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            pressed && styles.buttonPressedSecondary,
-          ]}
+          style={[styles.button, styles.login]}
           onPress={() => router.push('/login')}
-          accessibilityLabel="Logga in"
         >
-          <Text style={styles.secondaryText}>🔐 Logga in</Text>
+          <Text style={[styles.buttonText, { color: '#7c3aed' }]}>🔐 Logga in</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [
-            styles.tertiaryButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={[styles.button, styles.register]}
           onPress={() => router.push('/register')}
-          accessibilityLabel="Skapa konto"
         >
-          <Text style={styles.tertiaryText}>🆕 Skapa konto</Text>
+          <Text style={styles.buttonText}>🆕 Skapa konto</Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E3F2FD',
-    alignItems: 'center',
-    justifyContent: 'center',
     padding: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logo: {
-    width: 180,
-    height: 180,
+    width: 160,
+    height: 160,
     marginBottom: 20,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1DA1F2',
-    marginBottom: 10,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 30,
+    fontSize: 16,
+    marginBottom: 32,
     textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
     gap: 16,
   },
-  primaryButton: {
+  button: {
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: 'center',
+  },
+  guest: {
     backgroundColor: '#1DA1F2',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
   },
-  secondaryButton: {
-    backgroundColor: '#ffffff',
-    borderColor: '#1DA1F2',
+  login: {
+    backgroundColor: '#fff',
     borderWidth: 2,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    borderColor: '#7c3aed',
   },
-  tertiaryButton: {
-    backgroundColor: '#FFA726',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+  register: {
+    backgroundColor: '#7c3aed',
   },
-  primaryText: {
+  buttonText: {
+    fontWeight: 'bold',
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryText: {
-    color: '#1DA1F2',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  tertiaryText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  buttonPressed: {
-    opacity: 0.85,
-  },
-  buttonPressedSecondary: {
-    backgroundColor: '#e3f3ff',
   },
 });

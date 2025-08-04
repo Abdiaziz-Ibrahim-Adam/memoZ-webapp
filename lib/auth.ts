@@ -1,14 +1,10 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+// lib/auth.ts
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase';
 
-export const register = async (email: string, password: string) => {
-  return await createUserWithEmailAndPassword(auth, email, password);
-};
+export const signUp = (email: string, password: string) =>
+  createUserWithEmailAndPassword(auth, email, password);
 
-export const login = async (email: string, password: string) => {
-  return await signInWithEmailAndPassword(auth, email, password);
-};
-
-export const logout = async () => {
-  return await signOut(auth);
-};
+export const signIn = (email: string, password: string) =>
+  signInWithEmailAndPassword(auth, email, password);
+export const signOut = () => auth.signOut();
