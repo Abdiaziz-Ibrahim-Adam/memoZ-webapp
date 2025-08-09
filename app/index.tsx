@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { auth } from "../lib/firebase";
 
 export default function Gate() {
   const router = useRouter();
@@ -14,9 +15,11 @@ export default function Gate() {
         const seen = await AsyncStorage.getItem("memoz:onboarded");
         if (!seen) {
           router.replace("/onboarding");
-        } else {
-          router.replace("/(tabs)");
+          return;
         }
+        // after onboarding, decide by auth state
+        const user = auth.currentUser;
+        router.replace(user ? "/(tabs)" : "/login");
       } finally {
         setReady(true);
       }

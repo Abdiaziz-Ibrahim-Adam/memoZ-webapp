@@ -9,8 +9,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import { Link } from "expo-router";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Bell, Settings, SlidersHorizontal } from "lucide-react-native";
 import {
   collection,
@@ -30,7 +29,8 @@ import {
   endOfDay,
 } from "date-fns";
 
-type Folder = { id: string; name: string; lists?: number; emoji?: string };
+type Folder = { id: string; name: string; lists: number; emoji?: string };
+type List = { id: string; folderId: string; userId: string };
 type Task = {
   id: string;
   title: string;
@@ -40,8 +40,6 @@ type Task = {
   done?: boolean;
 };
 
-
-
 const BG = "#F7F8FD";
 const TEXT = "#0b0f18";
 const MUTED = "#6b7280";
@@ -50,7 +48,6 @@ const BORDER = "#e5e7eb";
 const PRIMARY = "#7c3aed";
 
 /* ---------- UI bits ---------- */
-
 function WeekStrip({
   selected,
   onChange,
@@ -101,7 +98,7 @@ function WeekStrip({
 
 function FolderCard({ folder }: { folder: Folder }) {
   return (
-    <Link href={`/folders/${folder.id ?? ""}`} asChild>
+    <Link href={`/folders/${folder.id}`} asChild>
       <TouchableOpacity
         style={{
           width: 220,
@@ -125,7 +122,7 @@ function FolderCard({ folder }: { folder: Folder }) {
           <Text style={{ fontSize: 20 }}>{folder.emoji || "📁"}</Text>
         </View>
         <Text style={{ fontSize: 13, color: MUTED, marginTop: 8 }}>
-          {folder.lists ? `${folder.lists} Lists` : "Lists"}
+          {folder.lists} {folder.lists === 1 ? "List" : "Lists"}
         </Text>
         <Text style={{ marginTop: "auto", color: PRIMARY, fontWeight: "700" }}>See →</Text>
       </TouchableOpacity>
@@ -134,13 +131,8 @@ function FolderCard({ folder }: { folder: Folder }) {
 }
 
 function TaskRow({ task }: { task: Task }) {
-  const dt =
-    task.startsAt?.toDate?.() ??
-    (task.startsAt ? new Date(task.startsAt) : undefined);
-  const time = dt
-    ? new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    : "—";
-
+  const dt = task.startsAt?.toDate?.() ?? (task.startsAt ? new Date(task.startsAt) : undefined);
+  const time = dt ? new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
   const pill =
     task.priority === "high"
       ? { bg: "#FEE2E2", txt: "#B91C1C", dot: "🔴" }
@@ -177,19 +169,16 @@ function TaskRow({ task }: { task: Task }) {
           </Text>
         </View>
       </View>
-
       <Text style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>⏰ {time}</Text>
     </View>
   );
 }
 
 /* ---------- Screen ---------- */
-
 export default function HomeScreen() {
   const user = auth?.currentUser || null;
   const userId = user?.uid ?? "guest";
-  const displayName =
-    user?.displayName || user?.email?.split("@")[0] || "Friend";
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "Friend";
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -197,26 +186,33 @@ export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const router = useRouter();
 
-
-
-
-  // Load folders
+  // Load folders + list counts for this user
   useEffect(() => {
     (async () => {
-      const snap = await getDocs(collection(db, "folders"));
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as any[];
-      setFolders(
-        rows.map((r) => ({
-          id: r.id,
-          name: r.name || "Personal",
-          lists: r.lists || r.count || undefined,
-          emoji: r.emoji || "📁",
-        }))
-      );
-    })();
-  }, []);
+      const fSnap = await getDocs(query(collection(db, "folders"), where("userId", "==", userId)));
+      const lSnap = await getDocs(query(collection(db, "lists"), where("userId", "==", userId)));
 
-  // Load tasks for selected day
+      const listsByFolder: Record<string, number> = {};
+      lSnap.docs.forEach((d) => {
+        const { folderId } = d.data() as List;
+        listsByFolder[folderId] = (listsByFolder[folderId] ?? 0) + 1;
+      });
+
+      const rows = fSnap.docs.map((d) => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          name: data.name || "Personal",
+          lists: listsByFolder[d.id] ?? 0,
+          emoji: data.emoji || "📁",
+        } as Folder;
+      });
+
+      setFolders(rows);
+    })().catch(console.warn);
+  }, [userId]);
+
+  // Load tasks for selected day (requires composite index: userId asc, startsAt asc)
   const loadTasks = async (day: Date) => {
     const start = Timestamp.fromDate(startOfDay(day));
     const end = Timestamp.fromDate(endOfDay(day));
@@ -238,15 +234,11 @@ export default function HomeScreen() {
   }, [selectedDate, userId]);
 
   const filteredTasks = tasks.filter((t) =>
-    t.title?.toLowerCase?.().includes(search.toLowerCase())
+    t.title?.toLowerCase?.().includes((search || "").toLowerCase())
   );
 
   const greeting =
-    new Date().getHours() < 12
-      ? "Morning"
-      : new Date().getHours() < 18
-      ? "Afternoon"
-      : "Evening";
+    new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 18 ? "Afternoon" : "Evening";
 
   return (
     <ScrollView
@@ -274,14 +266,12 @@ export default function HomeScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: MUTED, fontSize: 12 }}>Good {greeting},</Text>
-          <Text style={{ color: TEXT, fontSize: 18, fontWeight: "900" }}>
-            {displayName}
-          </Text>
+          <Text style={{ color: TEXT, fontSize: 18, fontWeight: "900" }}>{displayName}</Text>
         </View>
         <TouchableOpacity style={{ padding: 8 }}>
           <Bell size={22} color={TEXT} />
         </TouchableOpacity>
-        <TouchableOpacity style={{ padding: 8 }}>
+        <TouchableOpacity style={{ padding: 8 }} onPress={() => router.push("/setting")}>
           <Settings size={22} color={TEXT} />
         </TouchableOpacity>
       </View>
@@ -310,7 +300,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Folders */}
+      {/* FOLDERS */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: "900", color: TEXT, flex: 1 }}>FOLDERS</Text>
         <Link href="/folders" asChild>
@@ -343,7 +333,7 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Tasks */}
+      {/* TASKS */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: "900", color: TEXT, flex: 1 }}>TASKS</Text>
         <TouchableOpacity style={{ padding: 6 }}>

@@ -92,6 +92,17 @@ export default function SettingsScreen() {
         <TouchableOpacity onPress={signOut} style={{ marginTop: 10, alignSelf: "flex-start" }}>
           <Text style={{ color: "#DC2626", fontWeight: "800" }}>Log out</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+        onPress={async () => {
+            await AsyncStorage.removeItem("memoz:onboarded");
+            // optional: send them to onboarding immediately
+            // router.replace("/onboarding");
+        }}
+        style={{ marginTop: 16 }}
+        >
+        <Text style={{ color: "#2563EB", fontWeight: "800" }}>Show onboarding again</Text>
+        </TouchableOpacity>
+
       </View>
     </View>
   );
