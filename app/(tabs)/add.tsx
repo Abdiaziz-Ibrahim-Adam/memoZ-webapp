@@ -1,298 +1,444 @@
-import React, { useEffect, useState } from 'react';
+// app/(tabs)/add.tsx
+import React, { useEffect, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Alert,
   Platform,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { getAuth } from 'firebase/auth';
-import { useRouter } from 'expo-router';
+  Alert,
+  LayoutAnimation,
+  UIManager,
+  ScrollView,
+} from "react-native";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { addDoc, collection, getDocs, Timestamp } from "firebase/firestore";
+import { db, auth } from "../../lib/firebase";
+import { format } from "date-fns";
 
-export default function AddTaskScreen() {
-  const [title, setTitle] = useState('');
-  const [priority, setPriority] = useState<'Low' | 'Medium' | 'High' | null>(null);
-  const [date, setDate] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);
-  const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
-  const [folders, setFolders] = useState<any[]>([]);
-  const [selectedFolder, setSelectedFolder] = useState<string>('');
-  const [showFolderDropdown, setShowFolderDropdown] = useState(false);
-  const router = useRouter();
-  const user = getAuth().currentUser;
+// Enable layout animation on Android
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
-  useEffect(() => {
-    const fetchFolders = async () => {
-      if (!user) return;
-      const q = query(collection(db, 'folders'), where('userId', '==', user.uid));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setFolders(data);
-    };
+type Folder = { id: string; name: string };
 
-    fetchFolders();
-  }, [user]);
+const COLORS = {
+  bg: "#F7F8FD",
+  card: "#F1F5F9",
+  white: "#FFFFFF",
+  text: "#0b0f18",
+  muted: "#6b7280",
+  border: "#E5E7EB",
+  primary: "#7C3AED",
+  low: { text: "#166534", border: "#86EFAC", bg: "#DCFCE7" },
+  med: { text: "#92400E", border: "#FDE68A", bg: "#FEF9C3" },
+  high: { text: "#B91C1C", border: "#FCA5A5", bg: "#FEE2E2" },
+};
 
-  const handleSave = async () => {
-    if (!title || !priority || !selectedFolder) {
-      Alert.alert('Please fill in all fields');
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, 'tasks'), {
-        userId: user?.uid || 'guest',
-        title,
-        priority,
-        date: date.toISOString().split('T')[0],
-        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        folder: selectedFolder,
-        createdAt: new Date(),
-      });
-      Alert.alert('Success', 'Task added!');
-      router.back();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Could not save task');
-    }
-  };
-
-  const handlePickerChange = (_: any, selectedDate?: Date) => {
-    setShowPicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-
-  const openPicker = (mode: 'date' | 'time') => {
-    setPickerMode(mode);
-    setShowPicker(true);
-  };
-
+function Section({
+  icon,
+  title,
+  children,
+  open,
+  onToggle,
+}: {
+  icon: string;
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Add Task</Text>
-
-      {/* Input card */}
-      <View style={styles.inputCard}>
-        <TextInput
-          placeholder="Add a new task..."
-          multiline
-          value={title}
-          onChangeText={setTitle}
-          style={styles.textArea}
-        />
-
-        {/* Priority */}
-        <View style={styles.section}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.icon}>🏷️</Text>
-            <Text style={styles.label}>Priority</Text>
-          </View>
-          <View style={styles.priorityGroup}>
-            {['Low', 'Medium', 'High'].map(p => (
-              <TouchableOpacity
-                key={p}
-                style={[
-                  styles.priorityBtn,
-                  priority === p && styles[`priority${p}`],
-                ]}
-                onPress={() => setPriority(p as 'Low' | 'Medium' | 'High')}
-              >
-                <Text
-                  style={[
-                    styles.priorityText,
-                    priority === p && styles.priorityTextActive,
-                  ]}
-                >
-                  {p}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+    <View
+      style={{
+        borderRadius: 16,
+        backgroundColor: COLORS.card,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        marginBottom: 12,
+      }}
+    >
+      <TouchableOpacity
+        onPress={() => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          onToggle();
+        }}
+        style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+        accessibilityRole="button"
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Text style={{ fontSize: 18 }}>{icon}</Text>
+          <Text style={{ fontSize: 16, fontWeight: "800", color: COLORS.text }}>{title}</Text>
         </View>
-
-        {/* Date & Time */}
-        <View style={styles.section}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.icon}>📅</Text>
-            <Text style={styles.label}>Date & Time</Text>
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-            <TouchableOpacity style={styles.dropdown} onPress={() => openPicker('date')}>
-              <Text>{date.toDateString()}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.dropdown} onPress={() => openPicker('time')}>
-              <Text>{date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {showPicker && (
-            <DateTimePicker
-              value={date}
-              mode={pickerMode}
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={handlePickerChange}
-            />
-          )}
-        </View>
-
-        {/* Notification placeholder */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.dropdown}>
-            <Text style={styles.icon}>🔔</Text>
-            <Text style={styles.label}>Add Notification</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Folder dropdown */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.dropdown}
-            onPress={() => setShowFolderDropdown(!showFolderDropdown)}
-          >
-            <Text style={styles.icon}>🗂️</Text>
-            <Text style={styles.label}>
-              {selectedFolder || 'Select Folder'}
-            </Text>
-          </TouchableOpacity>
-
-          {showFolderDropdown && (
-            <View style={styles.dropdownList}>
-              {folders.map(folder => (
-                <TouchableOpacity
-                  key={folder.id}
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    setSelectedFolder(folder.name);
-                    setShowFolderDropdown(false);
-                  }}
-                >
-                  <Text>{folder.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Save */}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-        <Text style={styles.saveText}>Save Task</Text>
+        <Text style={{ fontSize: 16, color: COLORS.muted }}>{open ? "▾" : "▸"}</Text>
       </TouchableOpacity>
-    </ScrollView>
+
+      {open ? <View style={{ marginTop: 12 }}>{children}</View> : null}
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputCard: {
-    backgroundColor: '#F3F6FC',
-    borderRadius: 20,
-    padding: 14,
-  },
-  textArea: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    fontSize: 16,
-    height: 120,
-    marginBottom: 20,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  label: {
-    fontWeight: '600',
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  icon: {
-    fontSize: 18,
-  },
-  dropdown: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 12,
-    flex: 1,
-  },
-  dropdownList: {
-    marginTop: 8,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 2,
-  },
-  dropdownItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  priorityGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
-  },
-  priorityBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 12,
-    marginHorizontal: 4,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  priorityLow: {
-    backgroundColor: '#E6F4EA',
-    borderColor: '#34C759',
-  },
-  priorityMedium: {
-    backgroundColor: '#FFF4E5',
-    borderColor: '#FF9500',
-  },
-  priorityHigh: {
-    backgroundColor: '#FFE5E5',
-    borderColor: '#FF3B30',
-  },
-  priorityText: {
-    fontWeight: '600',
-    color: '#555',
-  },
-  priorityTextActive: {
-    color: '#000',
-  },
-  saveBtn: {
-    marginTop: 30,
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  saveText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
+export default function AddScreen() {
+  // Form state
+  const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("low");
+  const [date, setDate] = useState(new Date());
+
+  // Picker visibility (native only)
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // Sections open/close
+  const [openPriority, setOpenPriority] = useState(true);
+  const [openDate, setOpenDate] = useState(true);
+  const [openNotif, setOpenNotif] = useState(false);
+  const [openFolder, setOpenFolder] = useState(true);
+
+  // Folders
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+
+  const [saving, setSaving] = useState(false);
+  const isWeb = Platform.OS === "web";
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDocs(collection(db, "folders"));
+        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+        const mapped: Folder[] = rows.map((r: any) => ({
+          id: r.id,
+          name: r.name || "Folder",
+        }));
+        setFolders(mapped);
+        if (!selectedFolder && mapped.length) setSelectedFolder(mapped[0].id);
+      } catch (e) {
+        console.warn("Failed to load folders", e);
+      }
+    })();
+  }, []);
+
+  const params = useLocalSearchParams<{ folder?: string }>();
+
+// after folders are loaded:
+useEffect(() => {
+  if (params.folder && folders.length) {
+    const exists = folders.find((f) => f.id === params.folder);
+    if (exists) setSelectedFolder(params.folder);
+  }
+}, [params.folder, folders]);
+
+  // Native pickers
+  const onChangeDate = (_: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (!selected) return;
+    setDate((prev) => {
+      const next = new Date(prev);
+      next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+      return next;
+    });
+  };
+  const onChangeTime = (_: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === "android") setShowTimePicker(false);
+    if (!selected) return;
+    setDate((prev) => {
+      const next = new Date(prev);
+      next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+      return next;
+    });
+  };
+
+  // Web pickers (HTML inputs)
+  const onWebDateChange = (value: string) => {
+    // value like "2025-08-19"
+    const [y, m, d] = value.split("-").map((n) => parseInt(n, 10));
+    if (!y || !m || !d) return;
+    setDate((prev) => {
+      const next = new Date(prev);
+      next.setFullYear(y, m - 1, d);
+      return next;
+    });
+  };
+  const onWebTimeChange = (value: string) => {
+    // value like "13:45"
+    const [hh, mm] = value.split(":").map((n) => parseInt(n, 10));
+    if (hh == null || mm == null) return;
+    setDate((prev) => {
+      const next = new Date(prev);
+      next.setHours(hh, mm, 0, 0);
+      return next;
+    });
+  };
+
+  const saveTask = async () => {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      Alert.alert("Add Task", "Please enter a task.");
+      return;
+    }
+    try {
+      setSaving(true);
+      const userId = auth?.currentUser?.uid ?? "guest";
+      await addDoc(collection(db, "tasks"), {
+        userId,
+        title: trimmed,
+        priority,
+        startsAt: Timestamp.fromDate(date),
+        folder: selectedFolder || null,
+        createdAt: Timestamp.fromDate(new Date()),
+        done: false,
+      });
+      setTitle("");
+      Alert.alert("Saved", "Your task was added.");
+    } catch (e: any) {
+      console.error(e);
+      Alert.alert("Error", e?.message ?? "Could not save task.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const displayDate = format(date, "MMM d, yyyy");
+  const displayTime = format(date, "HH:mm");
+
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+      {/* Title bar */}
+      <View
+        style={{
+          height: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          backgroundColor: COLORS.white,
+        }}
+      >
+        <Text style={{ fontSize: 18, fontWeight: "800", color: COLORS.text }}>Add Task</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 28 }}>
+        {/* Big textarea-like input */}
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: COLORS.border,
+            backgroundColor: COLORS.white,
+            borderRadius: 16,
+            marginBottom: 12,
+            overflow: "hidden",
+          }}
+        >
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Add a new task..."
+            placeholderTextColor="#94a3b8"
+            multiline
+            numberOfLines={4}
+            style={{
+              minHeight: 120,
+              padding: 14,
+              fontSize: 18,
+              color: COLORS.text,
+            }}
+          />
+          {/* Toolbar row (decorative) */}
+          <View
+            style={{
+              height: 48,
+              borderTopWidth: 1,
+              borderTopColor: COLORS.border,
+              paddingHorizontal: 12,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <Text style={{ fontSize: 18 }}>🎨</Text>
+            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: COLORS.primary }} />
+            <Text style={{ fontSize: 18 }}>🔖</Text>
+            <Text style={{ fontSize: 18 }}>✏️</Text>
+          </View>
+        </View>
+
+        {/* Priority */}
+        <Section icon="🏷️" title="Priority" open={openPriority} onToggle={() => setOpenPriority((v) => !v)}>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {([
+              { key: "low", label: "Low", theme: COLORS.low },
+              { key: "medium", label: "Medium", theme: COLORS.med },
+              { key: "high", label: "High", theme: COLORS.high },
+            ] as const).map((opt) => {
+              const active = priority === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={() => setPriority(opt.key)}
+                  style={{
+                    borderWidth: 2,
+                    borderColor: active ? opt.theme.border : COLORS.border,
+                    backgroundColor: active ? opt.theme.bg : COLORS.white,
+                    paddingVertical: 10,
+                    paddingHorizontal: 16,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text style={{ fontWeight: "800", color: active ? opt.theme.text : COLORS.text }}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Section>
+
+        {/* Set Date */}
+        <Section icon="📅" title="Set Date" open={openDate} onToggle={() => setOpenDate((v) => !v)}>
+          {isWeb ? (
+            // Web: HTML inputs
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                {/* @ts-ignore — using DOM input for web */}
+                <input
+                  type="date"
+                  value={format(date, "yyyy-MM-dd")}
+                  onChange={(e: any) => onWebDateChange(e.target.value)}
+                  style={{
+                    width: "100%",
+                    border: `1px solid ${COLORS.border}`,
+                    background: COLORS.white,
+                    borderRadius: 12,
+                    padding: "12px",
+                    fontSize: 16,
+                    color: COLORS.text,
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                {/* @ts-ignore — using DOM input for web */}
+                <input
+                  type="time"
+                  value={format(date, "HH:mm")}
+                  onChange={(e: any) => onWebTimeChange(e.target.value)}
+                  style={{
+                    width: "100%",
+                    border: `1px solid ${COLORS.border}`,
+                    background: COLORS.white,
+                    borderRadius: 12,
+                    padding: "12px",
+                    fontSize: 16,
+                    color: COLORS.text,
+                  }}
+                />
+              </View>
+            </View>
+          ) : (
+            // Native: RN community pickers
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                style={{
+                  flex: 1,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                  backgroundColor: COLORS.white,
+                  borderRadius: 12,
+                  padding: 12,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 12, color: COLORS.muted, marginBottom: 4 }}>DATE</Text>
+                <Text style={{ fontSize: 16, fontWeight: "800", color: COLORS.text }}>{displayDate}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                style={{
+                  flex: 1,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                  backgroundColor: COLORS.white,
+                  borderRadius: 12,
+                  padding: 12,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 12, color: COLORS.muted, marginBottom: 4 }}>TIME</Text>
+                <Text style={{ fontSize: 16, fontWeight: "800", color: COLORS.text }}>{displayTime}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {showDatePicker && (
+            <DateTimePicker value={date} mode="date" display={Platform.OS === "ios" ? "inline" : "default"} onChange={onChangeDate} />
+          )}
+          {showTimePicker && (
+            <DateTimePicker value={date} mode="time" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={onChangeTime} />
+          )}
+        </Section>
+
+        {/* Add Notification (placeholder) */}
+        <Section icon="🔔" title="Add Notification" open={openNotif} onToggle={() => setOpenNotif((v) => !v)}>
+          <Text style={{ color: COLORS.muted }}>
+            We’ll add reminders later. Saving the task stores the correct date & time now.
+          </Text>
+        </Section>
+
+        {/* Select Folder */}
+        <Section icon="📁" title="Select Folder" open={openFolder} onToggle={() => setOpenFolder((v) => !v)}>
+          {folders.length === 0 ? (
+            <Text style={{ color: COLORS.muted }}>No folders yet.</Text>
+          ) : (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+              {folders.map((f) => {
+                const active = selectedFolder === f.id;
+                return (
+                  <TouchableOpacity
+                    key={f.id}
+                    onPress={() => setSelectedFolder(f.id)}
+                    style={{
+                      borderWidth: 2,
+                      borderColor: active ? COLORS.primary : COLORS.border,
+                      backgroundColor: active ? "#EDE9FE" : COLORS.white,
+                      paddingVertical: 10,
+                      paddingHorizontal: 14,
+                      borderRadius: 999,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "800", color: active ? "#4C1D95" : COLORS.text }}>{f.name}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </Section>
+
+        {/* Save button */}
+        <TouchableOpacity
+          onPress={saveTask}
+          disabled={saving}
+          style={{
+            backgroundColor: saving ? "#A78BFA" : COLORS.primary,
+            paddingVertical: 16,
+            borderRadius: 16,
+            alignItems: "center",
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: 3,
+            marginTop: 4,
+          }}
+        >
+          <Text style={{ color: COLORS.white, fontSize: 18, fontWeight: "900" }}>
+            {saving ? "Saving…" : "Save Task"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+}

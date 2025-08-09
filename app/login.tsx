@@ -1,153 +1,127 @@
 // app/login.tsx
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-import { router } from 'expo-router';
-import { signIn } from '../lib/auth';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { loginWithUsername, usernameToEmail } from "../lib/auth";
+
+const UI = {
+  bg: "#F7F8FD",
+  card: "#FFFFFF",
+  text: "#0b0f18",
+  muted: "#6b7280",
+  border: "#E5E7EB",
+  primary: "#0EA5E9",
+};
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [error, setError] = useState('');
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const handleLogin = async () => {
-    try {
-      await signIn(email, password);
-      router.replace('/(tabs)');
-    } catch (e: any) {
-      setError(e.message);
+  async function onSignIn() {
+    if (!username.trim() || !password) {
+      return Alert.alert("Sign In", "Enter your username and password.");
     }
-  };
+    try {
+      setBusy(true);
+      await loginWithUsername(username.trim(), password);
+      router.replace("/(tabs)");
+    } catch (e: any) {
+      const msg = e?.code === "auth/invalid-credential" || e?.code === "auth/wrong-password"
+        ? "Wrong password. Try again."
+        : e?.code === "auth/user-not-found"
+        ? "No account with that username."
+        : e?.message ?? "Could not sign in.";
+      Alert.alert("Sign In", msg);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign In</Text>
-      <Text style={styles.subtitle}>Welcome back to TaskNexus</Text>
-
-      {/* Email */}
-      <View style={styles.inputGroup}>
-        <Mail size={20} color="#888" />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+    <View style={{ flex: 1, backgroundColor: UI.bg, paddingHorizontal: 16, paddingTop: 48 }}>
+      {/* Brand */}
+      <View style={{ alignItems: "center", marginBottom: 32 }}>
+        <Text style={{ fontSize: 36, fontWeight: "900", color: UI.primary }}>memoZ</Text>
       </View>
 
-      {/* Password */}
-      <View style={styles.inputGroup}>
-        <Lock size={20} color="#888" />
+      {/* Card */}
+      <View style={{ backgroundColor: UI.card, borderWidth: 1, borderColor: UI.border, borderRadius: 16, padding: 16 }}>
+        <Text style={{ fontSize: 20, fontWeight: "900", color: UI.text, marginBottom: 12 }}>Sign In</Text>
+
+        <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Username</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
+          value={username}
+          autoCapitalize="none"
+          onChangeText={setUsername}
+          placeholder="enter your username"
+          placeholderTextColor="#9ca3af"
+          style={{
+            borderWidth: 1,
+            borderColor: UI.border,
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 16,
+            marginBottom: 14,
+            backgroundColor: "#fff",
+            color: UI.text,
+          }}
+        />
+
+        <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Password</Text>
+        <TextInput
           value={password}
           onChangeText={setPassword}
-          secureTextEntry={!showPass}
+          placeholder="enter your password"
+          placeholderTextColor="#9ca3af"
+          secureTextEntry
+          style={{
+            borderWidth: 1,
+            borderColor: UI.border,
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 16,
+            marginBottom: 16,
+            backgroundColor: "#fff",
+            color: UI.text,
+          }}
         />
-        <TouchableOpacity onPress={() => setShowPass(!showPass)}>
-          {showPass ? (
-            <EyeOff size={20} color="#888" />
+
+        <TouchableOpacity
+          onPress={onSignIn}
+          disabled={busy}
+          style={{
+            backgroundColor: busy ? "#93c5fd" : UI.primary,
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: "center",
+          }}
+        >
+          {busy ? (
+            <ActivityIndicator color="#fff" />
           ) : (
-            <Eye size={20} color="#888" />
+            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>Sign In</Text>
           )}
         </TouchableOpacity>
+
+        <View style={{ alignItems: "center", marginTop: 14 }}>
+          <Text style={{ color: UI.muted }}>
+            Don’t have an account?{" "}
+            <Link href="/register" style={{ color: UI.primary, fontWeight: "800" }}>
+              Create Account
+            </Link>
+          </Text>
+        </View>
+
+        <View style={{ marginTop: 14 }}>
+          <Text style={{ fontSize: 12, color: UI.muted }}>
+            Your private email will be <Text style={{ fontWeight: "700", color: UI.text }}>
+              {username ? usernameToEmail(username) : "username@memoz.app"}
+            </Text>.
+          </Text>
+        </View>
       </View>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      <Pressable onPress={handleLogin} style={styles.signInButton}>
-        <Text style={styles.signInText}>Sign In</Text>
-      </Pressable>
-
-      <TouchableOpacity onPress={() => router.push('/register')}>
-        <Text style={styles.linkText}>
-          Don’t have an account? <Text style={styles.linkAccent}>Register</Text>
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.replace('/')}>
-        <Text style={styles.backLink}>← Tillbaka till startsidan</Text>
-      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#000',
-    marginBottom: 4,
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#888',
-    marginBottom: 24,
-  },
-  inputGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-    marginBottom: 24,
-    paddingBottom: 4,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    color: '#000',
-    fontSize: 16,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  signInButton: {
-    backgroundColor: '#7c3aed', // Violet
-    paddingVertical: 12,
-    borderRadius: 30,
-    marginBottom: 20,
-  },
-  signInText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  linkText: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 14,
-  },
-  linkAccent: {
-    color: '#7c3aed',
-    fontWeight: '600',
-  },
-  backLink: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 13,
-    marginTop: 24,
-  },
-});

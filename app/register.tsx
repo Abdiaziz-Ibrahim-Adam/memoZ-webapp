@@ -1,176 +1,127 @@
 // app/register.tsx
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-import { router } from 'expo-router';
-import { signUp } from '../lib/auth';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, Alert, Platform, ActivityIndicator } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { isUsernameAvailable, registerWithUsername, usernameToEmail } from "../lib/auth";
+
+const UI = {
+  bg: "#F7F8FD",
+  card: "#FFFFFF",
+  text: "#0b0f18",
+  muted: "#6b7280",
+  border: "#E5E7EB",
+  primary: "#0EA5E9", // memoZ blue
+  black: "#111827",
+};
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState('');
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const handleRegister = async () => {
-    if (password !== confirm) {
-      setError("Lösenorden matchar inte");
-      return;
-    }
+  async function onCreate() {
+    const u = username.trim();
+    if (!u || u.length < 3) return Alert.alert("Username", "Pick a username with at least 3 characters.");
+    if (!password || password.length < 6) return Alert.alert("Password", "Use at least 6 characters.");
 
     try {
-      await signUp(email, password);
-      router.replace('/(tabs)');
+      setBusy(true);
+      const free = await isUsernameAvailable(u);
+      if (!free) return Alert.alert("Username", "That username is taken. Try another one.");
+
+      await registerWithUsername(u, password);
+      Alert.alert("Welcome to memoZ", `Signed in as @${u}`);
+      router.replace("/(tabs)");
     } catch (e: any) {
-      setError(e.message);
+      Alert.alert("Couldn’t create account", e?.message ?? "Try again.");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Skapa Konto</Text>
-      <Text style={styles.subtitle}>Bli en del av TaskNexus</Text>
-
-      {/* Email */}
-      <View style={styles.inputGroup}>
-        <Mail size={20} color="#888" />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+    <View style={{ flex: 1, backgroundColor: UI.bg, paddingHorizontal: 16, paddingTop: 48 }}>
+      {/* Brand */}
+      <View style={{ alignItems: "center", marginBottom: 32 }}>
+        <Text style={{ fontSize: 36, fontWeight: "900", color: UI.primary }}>memoZ</Text>
       </View>
 
-      {/* Password */}
-      <View style={styles.inputGroup}>
-        <Lock size={20} color="#888" />
+      {/* Card */}
+      <View style={{ backgroundColor: UI.card, borderWidth: 1, borderColor: UI.border, borderRadius: 16, padding: 16 }}>
+        <Text style={{ fontSize: 20, fontWeight: "900", color: UI.text, marginBottom: 12 }}>Create Account</Text>
+
+        <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Username</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Lösenord"
-          placeholderTextColor="#999"
+          value={username}
+          autoCapitalize="none"
+          onChangeText={setUsername}
+          placeholder="choose a username"
+          placeholderTextColor="#9ca3af"
+          style={{
+            borderWidth: 1,
+            borderColor: UI.border,
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 16,
+            marginBottom: 14,
+            backgroundColor: "#fff",
+            color: UI.text,
+          }}
+        />
+
+        <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Password</Text>
+        <TextInput
           value={password}
           onChangeText={setPassword}
-          secureTextEntry={!showPass}
+          placeholder="enter a password"
+          placeholderTextColor="#9ca3af"
+          secureTextEntry
+          style={{
+            borderWidth: 1,
+            borderColor: UI.border,
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 16,
+            marginBottom: 16,
+            backgroundColor: "#fff",
+            color: UI.text,
+          }}
         />
-        <TouchableOpacity onPress={() => setShowPass(!showPass)}>
-          {showPass ? <EyeOff size={20} color="#888" /> : <Eye size={20} color="#888" />}
-        </TouchableOpacity>
-      </View>
 
-      {/* Confirm Password */}
-      <View style={styles.inputGroup}>
-        <Lock size={20} color="#888" />
-        <TextInput
-          style={styles.input}
-          placeholder="Bekräfta Lösenord"
-          placeholderTextColor="#999"
-          value={confirm}
-          onChangeText={setConfirm}
-          secureTextEntry={!showConfirm}
-        />
-        <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
-          {showConfirm ? (
-            <EyeOff size={20} color="#888" />
+        <TouchableOpacity
+          onPress={onCreate}
+          disabled={busy}
+          style={{
+            backgroundColor: busy ? "#93c5fd" : UI.primary,
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: "center",
+          }}
+        >
+          {busy ? (
+            <ActivityIndicator color="#fff" />
           ) : (
-            <Eye size={20} color="#888" />
+            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>Create Account</Text>
           )}
         </TouchableOpacity>
+
+        <View style={{ alignItems: "center", marginTop: 14 }}>
+          <Text style={{ color: UI.muted }}>
+            Already have an account?{" "}
+            <Link href="/login" style={{ color: UI.primary, fontWeight: "800" }}>
+              Sign In
+            </Link>
+          </Text>
+        </View>
+
+        {/* Helpful hint */}
+        <View style={{ marginTop: 14 }}>
+          <Text style={{ fontSize: 12, color: UI.muted }}>
+            We use a private email like <Text style={{ fontWeight: "700", color: UI.black }}>{username ? usernameToEmail(username) : "username@memoz.app"}</Text> internally so your login works securely.
+          </Text>
+        </View>
       </View>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      <Pressable onPress={handleRegister} style={styles.registerButton}>
-        <Text style={styles.registerText}>Registrera</Text>
-      </Pressable>
-
-      <TouchableOpacity onPress={() => router.push('/login')}>
-        <Text style={styles.linkText}>
-          Har du redan ett konto? <Text style={styles.linkAccent}>Logga in</Text>
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.replace('/')}>
-        <Text style={styles.backLink}>← Tillbaka till startsidan</Text>
-      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#000',
-    marginBottom: 4,
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#888',
-    marginBottom: 24,
-  },
-  inputGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-    marginBottom: 24,
-    paddingBottom: 4,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    color: '#000',
-    fontSize: 16,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  registerButton: {
-    backgroundColor: '#7c3aed', // Violet
-    paddingVertical: 12,
-    borderRadius: 30,
-    marginBottom: 20,
-  },
-  registerText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  linkText: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 14,
-  },
-  linkAccent: {
-    color: '#7c3aed',
-    fontWeight: '600',
-  },
-  backLink: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 13,
-    marginTop: 24,
-  },
-});

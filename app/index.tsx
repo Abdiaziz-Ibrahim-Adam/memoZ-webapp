@@ -1,98 +1,34 @@
 // app/index.tsx
-import { View, Text, Pressable, Image, StyleSheet, useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import { View, Text } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
-export default function HomeScreen() {
+export default function Gate() {
   const router = useRouter();
-  const isDark = useColorScheme() === 'dark';
+  const [ready, setReady] = useState(false);
 
-  return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}>
-      <Image
-        source={require('../assets/images/paper_17737469.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+  useEffect(() => {
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem("memoz:onboarded");
+        if (!seen) {
+          router.replace("/onboarding");
+        } else {
+          router.replace("/(tabs)");
+        }
+      } finally {
+        setReady(true);
+      }
+    })();
+  }, []);
 
-      <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>
-        Välkommen till memoZ
-      </Text>
-      <Text style={[styles.subtitle, { color: isDark ? '#aaa' : '#555' }]}>
-        Din visuella hjälp med rutiner, medicin och mer!
-      </Text>
-
-      <View style={styles.buttonContainer}>
-        <Pressable
-          style={[styles.button, styles.guest]}
-          onPress={() => router.replace('/(tabs)')}
-        >
-          <Text style={styles.buttonText}>🎯 Fortsätt som gäst</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.button, styles.login]}
-          onPress={() => router.push('/login')}
-        >
-          <Text style={[styles.buttonText, { color: '#7c3aed' }]}>🔐 Logga in</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.button, styles.register]}
-          onPress={() => router.push('/register')}
-        >
-          <Text style={styles.buttonText}>🆕 Skapa konto</Text>
-        </Pressable>
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#0EA5E9", alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ fontSize: 40, fontWeight: "900", color: "#fff" }}>memoZ</Text>
       </View>
-    </View>
-  );
+    );
+  }
+  return null;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 160,
-    height: 160,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: 16,
-  },
-  button: {
-    paddingVertical: 14,
-    borderRadius: 30,
-    alignItems: 'center',
-  },
-  guest: {
-    backgroundColor: '#1DA1F2',
-  },
-  login: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#7c3aed',
-  },
-  register: {
-    backgroundColor: '#7c3aed',
-  },
-  buttonText: {
-    fontWeight: 'bold',
-    color: '#fff',
-    fontSize: 16,
-  },
-});
