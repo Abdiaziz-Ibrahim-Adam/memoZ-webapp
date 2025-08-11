@@ -96,7 +96,7 @@ export default function SettingsScreen() {
         onPress={async () => {
             await AsyncStorage.removeItem("memoz:onboarded");
             // optional: send them to onboarding immediately
-            // router.replace("/onboarding");
+            router.replace("/onboarding");
         }}
         style={{ marginTop: 16 }}
         >

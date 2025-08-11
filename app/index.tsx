@@ -1,37 +1,21 @@
 // app/index.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View, Text } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { auth } from "../lib/firebase";
 
 export default function Gate() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const seen = await AsyncStorage.getItem("memoz:onboarded");
-        if (!seen) {
-          router.replace("/onboarding");
-          return;
-        }
-        // after onboarding, decide by auth state
-        const user = auth.currentUser;
-        router.replace(user ? "/(tabs)" : "/login");
-      } finally {
-        setReady(true);
-      }
-    })();
+    // Small delay so you see the blue splash briefly, then go to landing.
+    const t = setTimeout(() => router.replace("/landing"), 400);
+    return () => clearTimeout(t);
   }, []);
 
-  if (!ready) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#0EA5E9", alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 40, fontWeight: "900", color: "#fff" }}>memoZ</Text>
-      </View>
-    );
-  }
-  return null;
+  // Simple blue splash while we redirect
+  return (
+    <View style={{ flex: 1, backgroundColor: "#3B82B8", alignItems: "center", justifyContent: "center" }}>
+      <Text style={{ fontSize: 48, fontWeight: "900", color: "#fff", letterSpacing: 1 }}>memoZ</Text>
+    </View>
+  );
 }

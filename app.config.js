@@ -2,22 +2,36 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: "memoZ_apk",
-    slug: "memoZ_apk",
+    name: "memoZ",
+    slug: "memoz_apk",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/images/memoz-icon.png", // main icon for iOS + Android
     scheme: "memozapk",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
-    ios: { supportsTablet: true },
+    
+    splash: { // splash screen setup
+      image: "./assets/images/memoz-splash.png",
+      resizeMode: "contain",
+      backgroundColor: "#60A5FA" // same blue as onboarding
+    },
+
+    ios: {
+      supportsTablet: true
+    },
+
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       }
     },
-    experiments: { typedRoutes: true },
+
+    experiments: {
+      typedRoutes: true
+    },
+
     extra: {
       FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
       FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,

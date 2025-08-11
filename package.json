@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
-    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-picker/picker": "2.11.1",
     "@react-navigation/bottom-tabs": "^7.3.10",
@@ -37,9 +37,9 @@
     "expo-web-browser": "~14.2.0",
     "firebase": "^9.23.0",
     "lucide-react-native": "^0.532.0",
-    "react": "19.0.0",
+    "react": "^19.0.0",
     "react-dom": "19.0.0",
-    "react-native": "0.79.5",
+    "react-native": "^0.79.5",
     "react-native-calendars": "^1.1313.0",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "~2.24.0",
@@ -62,5 +62,20 @@
     "gh-pages": "^6.3.0",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "description": "memoZ är en tillgänglighetsanpassad mobil- och webbapp byggd med React Native och Firebase. Appen hjälper användare att minnas viktiga händelser som medicinintag, tandborstning och andra vardagliga aktiviteter – särskilt framtagen för personer med kognitiva svårigheter.",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abdiaziz-Ibrahim-Adam/memoZ_apk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Abdiaziz-Ibrahim-Adam/memoZ_apk/issues"
+  }
 }
