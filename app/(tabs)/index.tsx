@@ -18,6 +18,8 @@ import {
   query,
   Timestamp,
   where,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../lib/firebase";
 import {
@@ -28,13 +30,14 @@ import {
   startOfDay,
   endOfDay,
 } from "date-fns";
+import { G } from "react-native-svg";
 
 type Folder = { id: string; name: string; lists: number; emoji?: string };
 type List = { id: string; folderId: string; userId: string };
 type Task = {
   id: string;
   title: string;
-  startsAt?: any; // Firestore Timestamp
+  startsAt?: any;
   priority?: "low" | "medium" | "high";
   folder?: string | null;
   done?: boolean;
@@ -131,8 +134,12 @@ function FolderCard({ folder }: { folder: Folder }) {
 }
 
 function TaskRow({ task }: { task: Task }) {
+  const router = useRouter();
   const dt = task.startsAt?.toDate?.() ?? (task.startsAt ? new Date(task.startsAt) : undefined);
-  const time = dt ? new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+  const time = dt
+    ? new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : "—";
+
   const pill =
     task.priority === "high"
       ? { bg: "#FEE2E2", txt: "#B91C1C", dot: "🔴" }
@@ -140,8 +147,13 @@ function TaskRow({ task }: { task: Task }) {
       ? { bg: "#FEF3C7", txt: "#92400E", dot: "🟠" }
       : { bg: "#E0E7FF", txt: "#3730A3", dot: "🔵" };
 
+  const toggleDone = async () => {
+    await updateDoc(doc(db, "tasks", task.id), { done: !task.done });
+  };
+
   return (
-    <View
+    <TouchableOpacity
+      onPress={() => router.push(`/task/${task.id}`)}
       style={{
         borderWidth: 1,
         borderColor: BORDER,
@@ -149,28 +161,55 @@ function TaskRow({ task }: { task: Task }) {
         borderRadius: 16,
         padding: 14,
         marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
       }}
     >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={{ fontSize: 16, fontWeight: "800", color: TEXT, flexShrink: 1 }}>
-          {task.title}
-        </Text>
-        <View
-          style={{
-            backgroundColor: pill.bg,
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            borderRadius: 999,
-            marginLeft: 8,
-          }}
-        >
-          <Text style={{ fontSize: 12, fontWeight: "800", color: pill.txt }}>
-            {pill.dot} {(task.priority ?? "low").toUpperCase()}
+      <TouchableOpacity
+        onPress={(e) => {
+          e.stopPropagation();
+          toggleDone();
+        }}
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 9,
+          borderWidth: 1.5,
+          borderColor: BORDER,
+          marginRight: 10,
+          backgroundColor: task.done ? "#22C55E" : "#fff",
+        }}
+      />
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "800",
+              color: task.done ? "#9CA3AF" : TEXT,
+              textDecorationLine: task.done ? "line-through" : "none",
+              flexShrink: 1,
+            }}
+          >
+            {task.title}
           </Text>
+          <View
+            style={{
+              backgroundColor: pill.bg,
+              paddingVertical: 4,
+              paddingHorizontal: 8,
+              borderRadius: 999,
+              marginLeft: 8,
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: "800", color: pill.txt }}>
+              {pill.dot} {(task.priority ?? "low").toUpperCase()}
+            </Text>
+          </View>
         </View>
+        <Text style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>⏰ {time}</Text>
       </View>
-      <Text style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>⏰ {time}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -186,7 +225,6 @@ export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const router = useRouter();
 
-  // Load folders + list counts for this user
   useEffect(() => {
     (async () => {
       const fSnap = await getDocs(query(collection(db, "folders"), where("userId", "==", userId)));
@@ -212,7 +250,6 @@ export default function HomeScreen() {
     })().catch(console.warn);
   }, [userId]);
 
-  // Load tasks for selected day (requires composite index: userId asc, startsAt asc)
   const loadTasks = async (day: Date) => {
     const start = Timestamp.fromDate(startOfDay(day));
     const end = Timestamp.fromDate(endOfDay(day));
@@ -230,7 +267,6 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadTasks(selectedDate).catch(console.warn);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, userId]);
 
   const filteredTasks = tasks.filter((t) =>
@@ -245,7 +281,7 @@ export default function HomeScreen() {
       style={{ flex: 1, backgroundColor: BG }}
       contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
     >
-      {/* Top bar with user name */}
+      {/* Top bar */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
         <View
           style={{
@@ -276,7 +312,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Week strip */}
       <WeekStrip selected={selectedDate} onChange={setSelectedDate} />
 
       {/* Search */}
@@ -300,7 +335,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* FOLDERS */}
+      {/* Folders */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: "900", color: TEXT, flex: 1 }}>FOLDERS</Text>
         <Link href="/folders" asChild>
@@ -310,11 +345,7 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 8, marginBottom: 16 }}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8, marginBottom: 16 }}>
         {folders.length === 0 ? (
           <View
             style={{
@@ -333,7 +364,7 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* TASKS */}
+      {/* Tasks */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: "900", color: TEXT, flex: 1 }}>TASKS</Text>
         <TouchableOpacity style={{ padding: 6 }}>
@@ -346,15 +377,7 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      <View
-        style={{
-          borderRadius: 20,
-          backgroundColor: CARD,
-          padding: 12,
-          borderWidth: 1,
-          borderColor: BORDER,
-        }}
-      >
+      <View style={{ borderRadius: 20, backgroundColor: CARD, padding: 12, borderWidth: 1, borderColor: BORDER }}>
         {filteredTasks.length === 0 ? (
           <View style={{ padding: 8 }}>
             <Text style={{ color: MUTED }}>No tasks for this day.</Text>

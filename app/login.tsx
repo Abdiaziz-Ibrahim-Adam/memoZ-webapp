@@ -1,6 +1,12 @@
-// app/login.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Link, useRouter } from "expo-router";
 import { loginWithUsername, usernameToEmail } from "../lib/auth";
 
@@ -11,6 +17,7 @@ const UI = {
   muted: "#6b7280",
   border: "#E5E7EB",
   primary: "#0EA5E9",
+  danger: "#B91C1C",
 };
 
 export default function LoginScreen() {
@@ -18,21 +25,26 @@ export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onSignIn() {
-    if (!username.trim() || !password) {
-      return Alert.alert("Sign In", "Enter your username and password.");
+    const u = username.trim().toLowerCase();
+    const p = password;
+
+    setError(null);
+
+    if (!u || !p) {
+      setError("Enter your username and password.");
+      return;
     }
+
     try {
       setBusy(true);
-      await loginWithUsername(username.trim(), password);
+      await loginWithUsername(u, p);
       router.replace("/(tabs)");
     } catch (e: any) {
-      const msg = e?.code === "auth/invalid-credential" || e?.code === "auth/wrong-password"
-        ? "Wrong password. Try again."
-        : e?.code === "auth/user-not-found"
-        ? "No account with that username."
-        : e?.message ?? "Could not sign in.";
+      const msg = e?.message ?? "Could not sign in. Please try again.";
+      setError(msg);
       Alert.alert("Sign In", msg);
     } finally {
       setBusy(false);
@@ -47,14 +59,41 @@ export default function LoginScreen() {
       </View>
 
       {/* Card */}
-      <View style={{ backgroundColor: UI.card, borderWidth: 1, borderColor: UI.border, borderRadius: 16, padding: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: "900", color: UI.text, marginBottom: 12 }}>Sign In</Text>
+      <View
+        style={{
+          backgroundColor: UI.card,
+          borderWidth: 1,
+          borderColor: UI.border,
+          borderRadius: 16,
+          padding: 16,
+        }}
+      >
+        <Text style={{ fontSize: 20, fontWeight: "900", color: UI.text, marginBottom: 12 }}>
+          Sign In
+        </Text>
+
+        {/* Inline error */}
+        {error ? (
+          <View
+            style={{
+              backgroundColor: "#FEE2E2",
+              borderColor: "#FCA5A5",
+              borderWidth: 1,
+              padding: 10,
+              borderRadius: 10,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ color: UI.danger, fontWeight: "700" }}>{error}</Text>
+          </View>
+        ) : null}
 
         <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Username</Text>
         <TextInput
           value={username}
           autoCapitalize="none"
-          onChangeText={setUsername}
+          autoCorrect={false}
+          onChangeText={(t) => setUsername(t.replace(/\s+/g, ""))}
           placeholder="enter your username"
           placeholderTextColor="#9ca3af"
           style={{
@@ -116,9 +155,11 @@ export default function LoginScreen() {
 
         <View style={{ marginTop: 14 }}>
           <Text style={{ fontSize: 12, color: UI.muted }}>
-            Your private email will be <Text style={{ fontWeight: "700", color: UI.text }}>
-              {username ? usernameToEmail(username) : "username@memoz.app"}
-            </Text>.
+            Your private email will be{" "}
+            <Text style={{ fontWeight: "700", color: UI.text }}>
+              {username ? usernameToEmail(username.trim().toLowerCase()) : "username@memoz.app"}
+            </Text>
+            .
           </Text>
         </View>
       </View>

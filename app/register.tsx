@@ -1,8 +1,18 @@
-// app/register.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, Platform, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Link, useRouter } from "expo-router";
-import { isUsernameAvailable, registerWithUsername, usernameToEmail } from "../lib/auth";
+import {
+  isUsernameAvailable,
+  registerWithUsername,
+  usernameToEmail,
+} from "../lib/auth";
 
 const UI = {
   bg: "#F7F8FD",
@@ -10,31 +20,46 @@ const UI = {
   text: "#0b0f18",
   muted: "#6b7280",
   border: "#E5E7EB",
-  primary: "#0EA5E9", // memoZ blue
-  black: "#111827",
+  primary: "#0EA5E9",
+  danger: "#B91C1C",
 };
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onCreate() {
-    const u = username.trim();
-    if (!u || u.length < 3) return Alert.alert("Username", "Pick a username with at least 3 characters.");
-    if (!password || password.length < 6) return Alert.alert("Password", "Use at least 6 characters.");
+    const name = fullName.trim();
+    const u = username.trim().toLowerCase();
+    const p = password;
+
+    setError(null);
+
+    if (!name) return setError("Please enter your name.");
+    if (!u || u.length < 3) return setError("Username must be at least 3 characters.");
+    if (!p || p.length < 6) return setError("Password must be at least 6 characters.");
 
     try {
       setBusy(true);
-      const free = await isUsernameAvailable(u);
-      if (!free) return Alert.alert("Username", "That username is taken. Try another one.");
 
-      await registerWithUsername(u, password);
+      // quick availability check
+      const free = await isUsernameAvailable(u);
+      if (!free) {
+        setError("That username is taken. Try another one.");
+        return;
+      }
+
+      await registerWithUsername(u, p, name);
       Alert.alert("Welcome to memoZ", `Signed in as @${u}`);
       router.replace("/(tabs)");
     } catch (e: any) {
-      Alert.alert("Couldn’t create account", e?.message ?? "Try again.");
+      const msg = e?.message ?? "Could not create account. Please try again.";
+      setError(msg);
+      Alert.alert("Register", msg);
     } finally {
       setBusy(false);
     }
@@ -48,14 +73,60 @@ export default function RegisterScreen() {
       </View>
 
       {/* Card */}
-      <View style={{ backgroundColor: UI.card, borderWidth: 1, borderColor: UI.border, borderRadius: 16, padding: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: "900", color: UI.text, marginBottom: 12 }}>Create Account</Text>
+      <View
+        style={{
+          backgroundColor: UI.card,
+          borderWidth: 1,
+          borderColor: UI.border,
+          borderRadius: 16,
+          padding: 16,
+        }}
+      >
+        <Text style={{ fontSize: 20, fontWeight: "900", color: UI.text, marginBottom: 12 }}>
+          Create Account
+        </Text>
+
+        {/* Inline error */}
+        {error ? (
+          <View
+            style={{
+              backgroundColor: "#FEE2E2",
+              borderColor: "#FCA5A5",
+              borderWidth: 1,
+              padding: 10,
+              borderRadius: 10,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ color: UI.danger, fontWeight: "700" }}>{error}</Text>
+          </View>
+        ) : null}
+
+        <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Full name</Text>
+        <TextInput
+          value={fullName}
+          onChangeText={setFullName}
+          placeholder="e.g. Done A"
+          placeholderTextColor="#9ca3af"
+          autoCapitalize="words"
+          style={{
+            borderWidth: 1,
+            borderColor: UI.border,
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 16,
+            marginBottom: 14,
+            backgroundColor: "#fff",
+            color: UI.text,
+          }}
+        />
 
         <Text style={{ fontSize: 14, color: UI.muted, marginBottom: 6 }}>Username</Text>
         <TextInput
           value={username}
           autoCapitalize="none"
-          onChangeText={setUsername}
+          autoCorrect={false}
+          onChangeText={(t) => setUsername(t.replace(/\s+/g, ""))}
           placeholder="choose a username"
           placeholderTextColor="#9ca3af"
           style={{
@@ -115,10 +186,14 @@ export default function RegisterScreen() {
           </Text>
         </View>
 
-        {/* Helpful hint */}
+        {/* Hint */}
         <View style={{ marginTop: 14 }}>
           <Text style={{ fontSize: 12, color: UI.muted }}>
-            We use a private email like <Text style={{ fontWeight: "700", color: UI.black }}>{username ? usernameToEmail(username) : "username@memoz.app"}</Text> internally so your login works securely.
+            We create a private login email like{" "}
+            <Text style={{ fontWeight: "700", color: UI.text }}>
+              {username ? usernameToEmail(username.trim().toLowerCase()) : "username@memoz.app"}
+            </Text>
+            .
           </Text>
         </View>
       </View>

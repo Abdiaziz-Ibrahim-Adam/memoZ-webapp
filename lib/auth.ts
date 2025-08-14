@@ -1,84 +1,97 @@
 // lib/auth.ts
 import {
-  getAuth,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  linkWithCredential,
-  EmailAuthProvider,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 import {
   doc,
+  setDoc,
   getDoc,
   runTransaction,
   serverTimestamp,
-  setDoc,
-  Firestore,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-/** Convert a username to a synthetic email Firebase accepts. */
-export function usernameToEmail(username: string) {
-  const clean = username.trim().toLowerCase();
-  return `${clean}@memoz.app`; // brand domain
+function normalizeUsername(u: string) {
+  return u.trim().toLowerCase();
 }
 
-/** Reserve a username atomically: /usernames/{name} -> { uid } */
-async function reserveUsername(dbRef: Firestore, username: string, uid: string) {
-  const key = username.trim().toLowerCase();
-  const ref = doc(dbRef, "usernames", key);
+export function usernameToEmail(username: string) {
+  return `${normalizeUsername(username)}@memoz.app`;
+}
 
-  await runTransaction(dbRef, async (tx) => {
+export async function isUsernameAvailable(username: string) {
+  try {
+    const key = normalizeUsername(username);
+    const snap = await getDoc(doc(db, "usernames", key));
+    return !snap.exists();
+  } catch (err) {
+    console.error("USERNAME CHECK ERROR", err);
+    throw new Error("Could not check username availability. Try again.");
+  }
+}
+
+async function reserveUsernameAtomic(username: string, uid: string) {
+  const key = normalizeUsername(username);
+  const ref = doc(db, "usernames", key);
+  await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
-    if (snap.exists()) throw new Error("Username is taken. Try another one.");
+    if (snap.exists()) {
+      throw new Error("That username is already taken.");
+    }
     tx.set(ref, { uid, createdAt: serverTimestamp() });
   });
 }
 
-/** Create or update user profile doc. */
-async function upsertUserDoc(dbRef: Firestore, uid: string, username: string) {
-  const ref = doc(dbRef, "users", uid);
-  await setDoc(
-    ref,
-    { username, updatedAt: serverTimestamp(), createdAt: serverTimestamp() },
-    { merge: true }
-  );
-}
+export async function registerWithUsername(
+  username: string,
+  password: string,
+  fullName: string
+) {
+  try {
+    const clean = normalizeUsername(username);
+    const email = usernameToEmail(clean);
 
-/** Register with username + password (upgrades anonymous user if present). */
-export async function registerWithUsername(username: string, password: string) {
-  const a = getAuth(); // app already initialized in lib/firebase
-  const email = usernameToEmail(username);
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: fullName });
+    await reserveUsernameAtomic(clean, cred.user.uid);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      uid: cred.user.uid,
+      fullName,
+      username: clean,
+      email,
+      createdAt: serverTimestamp(),
+    });
 
-  if (a.currentUser && a.currentUser.isAnonymous) {
-    // upgrade guest -> permanent
-    const cred = EmailAuthProvider.credential(email, password);
-    const { user } = await linkWithCredential(a.currentUser, cred);
-    await reserveUsername(db, username, user.uid);
-    await updateProfile(user, { displayName: username });
-    await upsertUserDoc(db, user.uid, username);
-    return user;
-  } else {
-    const { user } = await createUserWithEmailAndPassword(a, email, password);
-    await reserveUsername(db, username, user.uid);
-    await updateProfile(user, { displayName: username });
-    await upsertUserDoc(db, user.uid, username);
-    return user;
+    return cred.user;
+  } catch (err: any) {
+    console.error("REGISTER ERROR", err);
+    if (err?.code === "auth/email-already-in-use") {
+      throw new Error("An account already exists with that username.");
+    }
+    if (err?.code === "auth/weak-password") {
+      throw new Error("Password should be at least 6 characters.");
+    }
+    if (err?.message) throw err;
+    throw new Error("Could not create account. Please try again.");
   }
 }
 
-/** Sign in with username + password. */
 export async function loginWithUsername(username: string, password: string) {
-  const a = getAuth();
-  const email = usernameToEmail(username);
-  const { user } = await signInWithEmailAndPassword(a, email, password);
-  return user;
-}
-
-/** Is a username available? */
-export async function isUsernameAvailable(username: string) {
-  const key = username.trim().toLowerCase();
-  const ref = doc(db, "usernames", key);
-  const snap = await getDoc(ref);
-  return !snap.exists();
+  try {
+    const email = usernameToEmail(username);
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    return user;
+  } catch (err: any) {
+    console.error("LOGIN ERROR", err);
+    if (err?.code === "auth/invalid-credential" || err?.code === "auth/wrong-password") {
+      throw new Error("Wrong password. Please try again.");
+    }
+    if (err?.code === "auth/user-not-found") {
+      throw new Error("No account found with that username.");
+    }
+    if (err?.message) throw err;
+    throw new Error("Could not sign in. Please try again.");
+  }
 }
