@@ -7,6 +7,9 @@ import {
   FlatList,
   ListRenderItemInfo,
   Platform,
+  StatusBar,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from "react-native";
 import { useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +31,7 @@ export default function Onboarding() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
+  // Height that respects safe-area on iOS and avoids short screens clipping content
   const pageHeight = useMemo(
     () => Math.max(0, height - (Platform.OS === "android" ? 0 : insets.top + insets.bottom)),
     [height, insets.top, insets.bottom]
@@ -42,13 +46,24 @@ export default function Onboarding() {
     router.replace("/landing");
   };
 
+  // Keep page index in sync when swiping
   const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
     if (viewableItems?.length) {
       const idx = viewableItems[0].index ?? 0;
       setPage(idx);
     }
   }, []);
-  const viewabilityConfig = { itemVisiblePercentThreshold: 60 };
+  const viewabilityConfig = { itemVisiblePercentThreshold: 65 };
+
+  // Also update page from scroll position for extra reliability on some Android builds
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const x = e.nativeEvent.contentOffset.x;
+      const idx = Math.round(x / Math.max(1, width));
+      if (idx !== page) setPage(Math.min(slides.length - 1, Math.max(0, idx)));
+    },
+    [page, width]
+  );
 
   const next = () => {
     const p = Math.min(page + 1, slides.length - 1);
@@ -66,16 +81,28 @@ export default function Onboarding() {
         paddingBottom: Platform.OS === "ios" ? insets.bottom + 16 : 16,
         paddingHorizontal: 20,
       }}
+      accessibilityRole="summary"
+      accessibilityLabel={item.title}
+      testID={`slide-${index}`}
     >
       {/* Brand */}
       <View style={{ alignItems: "center", marginBottom: 16 }}>
-        <Text style={{ fontSize: 40, fontWeight: "900", color: "#fff", letterSpacing: 0.5 }}>memoZ</Text>
+        <Text
+          style={{ fontSize: 40, fontWeight: "900", color: "#fff", letterSpacing: 0.5 }}
+          accessibilityRole="header"
+        >
+          memoZ
+        </Text>
       </View>
 
       {/* Center content */}
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 80, marginBottom: 16 }}>{item.emoji}</Text>
-        <Text style={{ fontSize: 24, fontWeight: "900", color: "#0b0f18", textAlign: "center" }}>{item.title}</Text>
+        <Text style={{ fontSize: 80, marginBottom: 16 }} accessibilityLabel={`Illustration ${item.emoji}`}>
+          {item.emoji}
+        </Text>
+        <Text style={{ fontSize: 24, fontWeight: "900", color: "#0b0f18", textAlign: "center" }}>
+          {item.title}
+        </Text>
         <Text
           style={{
             fontSize: 16,
@@ -83,6 +110,7 @@ export default function Onboarding() {
             marginTop: 8,
             textAlign: "center",
             maxWidth: 360,
+            lineHeight: 22,
           }}
         >
           {item.body}
@@ -90,14 +118,23 @@ export default function Onboarding() {
       </View>
 
       {/* Skip + Next controls */}
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <TouchableOpacity onPress={goLanding} accessibilityRole="button">
+      <View
+        style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 48 }}
+        accessible
+      >
+        <TouchableOpacity
+          onPress={goLanding}
+          accessibilityRole="button"
+          accessibilityHint="Skips onboarding and shows the start screen"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          testID="skip-btn"
+        >
           <Text style={{ color: "#0b0f18", fontWeight: "800" }}>
             {index < slides.length - 1 ? "Skip" : " "}
           </Text>
         </TouchableOpacity>
 
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel="Page indicator">
           {slides.map((_, j) => (
             <View
               key={j}
@@ -117,11 +154,16 @@ export default function Onboarding() {
             onPress={next}
             style={{
               backgroundColor: "#0b0f18",
+              minHeight: 44,
               paddingVertical: 12,
               paddingHorizontal: 18,
               borderRadius: 12,
+              justifyContent: "center",
+              alignItems: "center",
             }}
             accessibilityRole="button"
+            accessibilityLabel="Next slide"
+            testID="next-btn"
           >
             <Text style={{ color: "#fff", fontWeight: "900" }}>Next</Text>
           </TouchableOpacity>
@@ -137,11 +179,15 @@ export default function Onboarding() {
             onPress={goLanding}
             style={{
               backgroundColor: "#0b0f18",
+              minHeight: 52,
               paddingVertical: 14,
               borderRadius: 12,
               alignItems: "center",
+              justifyContent: "center",
             }}
             accessibilityRole="button"
+            accessibilityLabel="Get started"
+            testID="get-started-btn"
           >
             <Text style={{ color: "#fff", fontWeight: "900" }}>Get Started</Text>
           </TouchableOpacity>
@@ -150,8 +196,12 @@ export default function Onboarding() {
     </View>
   );
 
+  const currentBg = slides[page]?.bg || slides[0].bg;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: slides[0].bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: currentBg }}>
+      {/* Status bar for contrast on colored slides */}
+      <StatusBar barStyle="light-content" />
       <FlatList
         ref={listRef}
         data={slides}
@@ -168,6 +218,14 @@ export default function Onboarding() {
         windowSize={3}
         alwaysBounceHorizontal={false}
         bounces={false}
+        // snappier paging on iOS/Android + more precise index updates
+        decelerationRate="fast"
+        snapToInterval={width}
+        snapToAlignment="start"
+        disableIntervalMomentum
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        testID="onboarding-list"
       />
     </SafeAreaView>
   );
