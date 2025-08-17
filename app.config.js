@@ -22,6 +22,7 @@ export default {
     },
 
     android: {
+      package: "com.zirzizo.memoz",   // 👈 unique reverse-domain ID
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
@@ -38,7 +39,12 @@ export default {
       FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
       FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET,
       FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      FIREBASE_APP_ID: process.env.FIREBASE_APP_ID
+      FIREBASE_APP_ID: process.env.FIREBASE_APP_ID,
+
+      
+      eas: {
+        projectId: "88203fe8-cc0a-4134-9dc1-42c0f8207fec"
+      }
     }
   }
 };
