@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "homepage": "https://abdiaziz-ibrahim-adam.github.io/MemoZ_App",
   "scripts": {
-    "web-build": "expo export --platform web",
-    "deploy": "npm run web-build && gh-pages -d dist",
+    "web-build": "expo export --platform web --output-dir docs",
+    "deploy": "npm run web-build &&git add docs && git commit -m 'update docs' && git push",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
