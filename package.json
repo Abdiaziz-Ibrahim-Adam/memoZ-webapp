@@ -2,7 +2,7 @@
   "name": "memoz_apk",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "homepage": "https://abdiaziz-ibrahim-adam.github.io/memoZ_apk",
+  "homepage": "https://abdiaziz-ibrahim-adam.github.io/MemoZ_App",
   "scripts": {
     "web-build": "expo export --platform web",
     "deploy": "npm run web-build && gh-pages -d dist",
