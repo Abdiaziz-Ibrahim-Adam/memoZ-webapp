@@ -1,4 +1,3 @@
-# Deploy Expo Web to GitHub Pages
 name: Deploy Expo Web to Pages
 
 on:
@@ -14,7 +13,7 @@ permissions:
 concurrency:
   group: "pages"
   cancel-in-progress: false
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,12 +30,12 @@ jobs:
         run: npm install
 
       - name: Build Expo web
-        run: npm run web-build   # runs expo export --platform web --output-dir docs
+        run: npm run web-build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs   # upload only the build folder
+          path: ./dist   # 👈 Expo exports here
 
   deploy:
     environment:
