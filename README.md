@@ -24,5 +24,5 @@ memoZ är en tillgänglighetsanpassad mobil- och webbapp byggd med React Native 
 1. Klona projektet:
 
 ```bash
-git clone https://github.com/<>/memoZ.git
+git clone (https://github.com/Abdiaziz-Ibrahim-Adam/MemoZ_App.git)
 cd memoZ
