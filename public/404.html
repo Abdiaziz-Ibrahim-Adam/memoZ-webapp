@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting…</title>
+    <script type="text/javascript">
+      // Force redirect to index.html with hash fallback
+      var redirectTo = window.location.protocol + "//" + window.location.host + "/MemoZ_App/";
+      var pathname = window.location.pathname.replace("/MemoZ_App", "");
+      var search = window.location.search;
+      var hash = window.location.hash;
+      window.location.replace(redirectTo + "#" + pathname + search + hash);
+    </script>
+  </head>
+  <body>
+    Redirecting…
+  </body>
+</html>

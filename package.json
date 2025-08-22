@@ -5,7 +5,8 @@
   "homepage": "https://abdiaziz-ibrahim-adam.github.io/MemoZ_App",
   "scripts": {
     "web-build": "expo export --platform web --output-dir dist",
-    "deploy": "npm run web-build && gh-pages -d dist",
+    "predeploy": "npm run web-build",
+    "deploy": "gh-pages -d dist",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
