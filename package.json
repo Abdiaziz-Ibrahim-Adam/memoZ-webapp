@@ -2,7 +2,7 @@
   "name": "memoz_apk",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "homepage": "https://abdiaziz-ibrahim-adam.github.io/MemoZ_App",
+  "homepage": "https://github.com/Abdiaziz-Ibrahim-Adam/memoZ-webapp",
   "scripts": {
     "web-build": "expo export --platform web --output-dir dist",
     "predeploy": "npm run web-build",
@@ -71,13 +71,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Abdiaziz-Ibrahim-Adam/MemoZ_App.git"
+    "url": "git+https://github.com/Abdiaziz-Ibrahim-Adam/memoZ-webapp.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Abdiaziz-Ibrahim-Adam/MemoZ_App/issues"
+    "url": "https://github.com/Abdiaziz-Ibrahim-Adam/memoZ-webapp/issues"
   }
 }
