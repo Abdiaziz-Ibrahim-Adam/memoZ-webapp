@@ -71,13 +71,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Abdiaziz-Ibrahim-Adam/memoZ_apk.git"
+    "url": "git+https://github.com/Abdiaziz-Ibrahim-Adam/MemoZ_App.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Abdiaziz-Ibrahim-Adam/memoZ_apk/issues"
+    "url": "https://github.com/Abdiaziz-Ibrahim-Adam/MemoZ_App/issues"
   }
 }
