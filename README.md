@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.png" alt="memoZ Logo" width="120"/>
+  <img src="assets/images/memoz-icon.png" alt="memoZ Logo" width="120"/>
 </p>
 
 # 📱 memoZ – Tillgänglighetsanpassad Dagplaneringsapp
