@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" alt="memoZ Logo" width="120"/>
+</p>
+
 # 📱 memoZ – Tillgänglighetsanpassad Dagplaneringsapp
 
 memoZ är en tillgänglighetsanpassad mobil- och webbapplikation byggd med **React Native (Expo)** och **Firebase**.  
