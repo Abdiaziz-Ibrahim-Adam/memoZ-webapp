@@ -23,25 +23,46 @@ Appen hjälper användare att minnas och organisera viktiga vardagliga aktivitet
 
 ## 🖼 Screenshots
 
+### Onboarding
+Introduktion som guidar nya användare genom appens funktioner.  
+
+![Onboarding](docs/screenshots/onboarding.png)
+
+### Landing
+Startsida för appen innan inloggning/registrering.  
+
+![Landing](docs/screenshots/landing.png)
+
+### Logga in
+Inloggning med e-post via Firebase Authentication.  
+
+![Login](docs/screenshots/login.png)
+
+### Registrera
+Registreringsformulär för nya användare.  
+
+![Register](docs/screenshots/register.png)
+
 ### Hemskärm (Dashboard)
-Får en snabb överblick över mappar, dagens uppgifter och veckostrip.  
+Ger en snabb överblick över mappar, dagens uppgifter och veckostrip.  
 
-![Dashboard](docs/screenshots/home.png)
+![Home](docs/screenshots/home.png)
 
-### Lägg till Uppgift
-Skapa uppgifter med datum, tid, prioritet och välj mapp.  
+### Uppgifter (Tasks)
+Lista där användaren kan se, filtrera och markera uppgifter som klara.  
 
-![Add Task](docs/screenshots/add.png)
+![Tasks](docs/screenshots/tasks.png)
 
 ### Kalender
-Månads- och dagsvy för att planera mer långsiktigt.  
+Månads- och dagsvy för planering på längre sikt.  
 
 ![Calendar](docs/screenshots/calendar.png)
 
-### Uppgiftslista
-Se, filtrera och markera uppgifter som klara.  
+### Lägg till Uppgift
+Formulär för att skapa nya uppgifter med datum, tid, prioritet och mapp.  
 
-![Tasks](docs/screenshots/tasks.png)
+![Add Task](docs/screenshots/add.png)
+
 
 ---
 
