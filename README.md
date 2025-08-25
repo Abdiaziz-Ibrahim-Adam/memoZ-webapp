@@ -30,7 +30,9 @@ Appen hjälper användare att minnas och organisera viktiga vardagliga aktivitet
 ### Onboarding
 Introduktion som guidar nya användare genom appens funktioner.  
 
-![Onboarding](docs/screenshots/onboarding.png)
+![Onboarding1](docs/screenshots/onboarding1.png)
+![Onboarding2](docs/screenshots/onboarding2.png)
+![Onboarding3](docs/screenshots/onboarding3.png)
 
 ### Landing
 Startsida för appen innan inloggning/registrering.  
