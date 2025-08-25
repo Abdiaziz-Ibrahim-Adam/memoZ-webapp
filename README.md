@@ -62,7 +62,7 @@ Lista där användaren kan se, filtrera och markera uppgifter som klara.
 ### Kalender
 Månads- och dagsvy för planering på längre sikt.  
 
-![Calendar](docs/screenshots/calendar.png)
+![Calendar](docs/screenshots/calender.png)
 
 ### Lägg till Uppgift
 Formulär för att skapa nya uppgifter med datum, tid, prioritet och mapp.  
